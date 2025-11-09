@@ -1,0 +1,8 @@
+ignore:
+  - vulnerability: GHSA-c2f4-jgmc-q2r5
+    package:
+      name: rexml
+      type: gem
+      version: 3.4.0
+    justifications:
+      - "Default Ruby 3.4 gem; Bundler pins and loads rexml >= 3.4.2 at runtime."
