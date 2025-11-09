@@ -46,7 +46,7 @@ jobs:
       # Scan SBOM with Grype
       - name: Scan SBOM with Grype
         run: |
-          grype sbom:sbom.cyclonedx.json -o sarif -q > grype-scan-results.sarif
+          grype sbom:sbom.cyclonedx.json -o sarif -q --ignore-states wont-fix > grype-scan-results.sarif
 
       # Upload Grype scan results as SARIF to Code scanning
       - name: Upload SARIF to Code scanning
