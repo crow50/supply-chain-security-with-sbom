@@ -66,7 +66,7 @@ jobs:
       # Upload Grype scan results as SARIF to Code scanning
       - name: Upload SARIF to Code scanning
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: grype-scan-results.sarif
 
