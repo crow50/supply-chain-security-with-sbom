@@ -1,0 +1,101 @@
+ignore:
+  - vulnerability: GHSA-c2f4-jgmc-q2r5
+    package:
+      name: rexml
+      type: gem
+      version: 3.4.0
+    justifications:
+      - "Default Ruby 3.4 gem; Bundler pins and loads rexml >= 3.4.2 at runtime."
+
+  - vulnerability: CVE-2024-56433
+    justifications:
+      - "Local multi-user SUBUID/SUBGID issue; container runs no local users or userns."
+
+  - vulnerability: CVE-2018-20796
+    justifications:
+      - "glibc strfmon overflow; no untrusted format-string or locale input in runtime."
+
+  - vulnerability: CVE-2019-1010022
+    justifications:
+      - "glibc regex engine issue; container does not evaluate attacker-controlled regex."
+
+  - vulnerability: CVE-2019-1010023
+    justifications:
+      - "Same class as 1010022; no untrusted regex evaluation in this workload."
+
+  - vulnerability: CVE-2019-1010024
+    justifications:
+      - "glibc regex issue; no regex parsing of external input occurs."
+
+  - vulnerability: CVE-2019-1010025
+    justifications:
+      - "glibc regex issue; not reachable based on container execution path."
+
+  - vulnerability: CVE-2019-9192
+    justifications:
+      - "glibc regex DoS; container does not expose regex evaluation on user input."
+
+  - vulnerability: CVE-2010-4756
+    justifications:
+      - "glibc glob() DoS; no attacker-controlled glob patterns used."
+
+  - vulnerability: CVE-2005-2541
+    justifications:
+      - "tar metadata issue; tar not used on untrusted archives."
+
+  - vulnerability: CVE-2011-3374
+    justifications:
+      - "apt info leak; apt is not executed at runtime."
+
+  - vulnerability: CVE-2021-45346
+    justifications:
+      - "SQLite disputed issue; container does not open attacker-provided DB files."
+
+  - vulnerability: CVE-2025-7709
+    justifications:
+      - "SQLite FTS5 integer overflow; FTS5 not used or enabled."
+
+  - vulnerability: CVE-2022-0563
+    justifications:
+      - "util-linux local CLI issue; no shell or interactive users in container."
+
+  - vulnerability: CVE-2017-18018
+    justifications:
+      - "coreutils symlink-race; requires local user running chown/chgrp."
+
+  - vulnerability: CVE-2025-5278
+    justifications:
+      - "coreutils sort issue; not used on attacker-controlled input."
+
+  - vulnerability: CVE-2025-6141
+    justifications:
+      - "ncurses termcap overflow; no interactive terminal access in container."
+
+  - vulnerability: CVE-2013-4392
+    justifications:
+      - "systemd local symlink issue; systemd not used inside the container."
+
+  - vulnerability: CVE-2023-31437
+    justifications:
+      - "systemd/journald sealed log issue; no systemd or FSS used."
+
+  - vulnerability: CVE-2023-31438
+    justifications:
+      - "systemd sealed journal truncation; container does not use journald."
+
+  - vulnerability: CVE-2023-31439
+    justifications:
+      - "systemd sealed log tampering; not applicable to this environment."
+
+  - vulnerability: CVE-2011-4116
+    justifications:
+      - "Perl File::Temp symlink issue; no Perl runtime in use."
+
+  - vulnerability: CVE-2022-0563
+    justifications:
+      - "Local-chfn/chsh info leak; no local users or chsh/chfn usage."
+
+  - vulnerability: CVE-2007-5686
+    justifications:
+      - "Shadow-utils local-only issue; no local users or login/passwd usage in container."
+

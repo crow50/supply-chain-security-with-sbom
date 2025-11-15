@@ -1,0 +1,80 @@
+name: SBOM Generation and Scanning with Syft and Grype
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+
+permissions:
+  contents: read
+  security-events: write
+
+
+jobs:
+  syft-and-grype:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Build the Docker image to be scanned
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t example-container:${{ github.sha }} .
+
+      # Install Syft
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin \
+            && syft version
+      
+      # Generating SBOM with Syft
+      - name: Generate SBOM with Syft
+        run: |
+          syft example-container:${{ github.sha }} -o cyclonedx-json > sbom.cyclonedx.json
+        
+      # Upload SBOM as artifact
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Syft-SBOM-SHA-${{ github.sha }}
+          path: sbom.cyclonedx.json
+          retention-days: 7
+
+      # Install Grype
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin \
+            && grype version
+
+      # Scan SBOM with Grype (only HIGH and CRITICAL severities)
+      - name: Scan SBOM with Grype
+        run: |
+          grype sbom:sbom.cyclonedx.json \
+          -o sarif \
+          -q \
+          -c .grype.yaml \
+          --ignore-states wont-fix \
+          --fail-on high \
+          > grype-scan-results.sarif
+
+      # Upload Grype scan results as SARIF to Code scanning
+      - name: Upload SARIF to Code scanning
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: grype-scan-results.sarif
+
+      # Upload SARIF results as artifact
+      - name: Upload SARIF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grype-SARIF-SHA-${{ github.sha }}
+          path: grype-scan-results.sarif
+          retention-days: 7
