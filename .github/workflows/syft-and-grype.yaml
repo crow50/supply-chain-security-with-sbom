@@ -55,13 +55,13 @@ jobs:
       # Scan SBOM with Grype (only HIGH and CRITICAL severities)
       - name: Scan SBOM with Grype
         run: |
-          grype sbom:sbom.cyclonedx.json \ # Scan the SBOM
-          -o sarif \ # Output format SARIF
+          grype sbom:sbom.cyclonedx.json \
+          -o sarif \
           -q \
-          -c .grype.yaml \ # Configuration file
-          --ignore-states wont-fix \ # Ignore 'wont-fix' vulnerabilities
-          --fail-on high \ # Fail on HIGH and CRITICAL vulnerabilities
-          > grype-scan-results.sarif # Save results to SARIF file
+          -c .grype.yaml \
+          --ignore-states wont-fix \
+          --fail-on high \
+          > grype-scan-results.sarif
 
       # Upload Grype scan results as SARIF to Code scanning
       - name: Upload SARIF to Code scanning
