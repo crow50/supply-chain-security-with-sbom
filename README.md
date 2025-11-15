@@ -184,9 +184,9 @@ We can chalk this up to differences in vulnerability databases and how each tool
 
 ### Risk Acceptance
 
-There exists any number of ays to handle risk, one way is to acknowldge and accpet certain risks.
+There exists any number of ways to handle risk, one way is to acknowledge and accept certain risks.
 In the security community, we believe in being open about our flaws and knowing we cannot control every variable.
-So to accept and acknowledge the risk in our Dockerfile, we will dismiss all of the alerts in the Security ab with clearly defined explanations, then we will add all of our current findings to our `.grype.yaml` file.
+So to accept and acknowledge the risk in our Dockerfile, we will dismiss all of the alerts in the Security tab with clearly defined explanations, then we will add all of our current findings to our `.grype.yaml` file.
 This gives us not only a risk profile, but will allow us to immediately see new vulnerabilities in the future.
 
 ![Dismiss GitHub Alerts](assets/dismiss-github-alerts.png)
@@ -213,4 +213,4 @@ This gives us not only a risk profile, but will allow us to immediately see new 
 DevSecOps as a process is incorporating security into the SDLC. 
 By using Syft and Grype, we learn what makes up each layers of our container, further securing our microservices.
 This exercise also shows when it is necessary to accept vulnerabilities.
-For the future, I would like to show using secure images such as those from Chainguard and a refined build process seperating the build and runtime layers in my container further reducing vulnerable surfaces.
+For the future, I would like to show using secure images such as those from Chainguard and a refined build process separating the build and runtime layers in my container further reducing vulnerable surfaces.
