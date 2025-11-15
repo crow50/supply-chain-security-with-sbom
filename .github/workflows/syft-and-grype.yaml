@@ -7,7 +7,7 @@ on:
   push:
 
 permissions:
-  contents: write
+  contents: read
   security-events: write
 
 
@@ -36,6 +36,15 @@ jobs:
       - name: Generate SBOM with Syft
         run: |
           syft example-container:${{ github.sha }} -o cyclonedx-json > sbom.cyclonedx.json
+        
+      # Upload SBOM as artifact
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Syft-SBOM-SHA-${{ github.sha }}
+          path: sbom.cyclonedx.json
+          retention-days: 7
 
       # Install Grype
       - name: Install Grype
@@ -43,10 +52,16 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin \
             && grype version
 
-      # Scan SBOM with Grype
+      # Scan SBOM with Grype (only HIGH and CRITICAL severities)
       - name: Scan SBOM with Grype
         run: |
-          grype sbom:sbom.cyclonedx.json -o sarif -q --ignore-states wont-fix > grype-scan-results.sarif
+          grype sbom:sbom.cyclonedx.json \ # Scan the SBOM
+          -o sarif \ # Output format SARIF
+          -q \
+          -c .grype.yaml \ # Configuration file
+          --ignore-states wont-fix \ # Ignore 'wont-fix' vulnerabilities
+          --fail-on high \ # Fail on HIGH and CRITICAL vulnerabilities
+          > grype-scan-results.sarif # Save results to SARIF file
 
       # Upload Grype scan results as SARIF to Code scanning
       - name: Upload SARIF to Code scanning
@@ -55,11 +70,11 @@ jobs:
         with:
           sarif_file: grype-scan-results.sarif
 
-      # Upload SBOM as artifact
-      - name: Upload SBOM
+      # Upload SARIF results as artifact
+      - name: Upload SARIF
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-cyclonedx
-          path: sbom.cyclonedx.json
+          name: Grype-SARIF-SHA-${{ github.sha }}
+          path: grype-scan-results.sarif
           retention-days: 7

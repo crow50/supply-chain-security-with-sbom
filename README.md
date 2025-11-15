@@ -158,3 +158,59 @@ No vulnerabilities found
 ```
 
 ![Custom Config](assets/custom-config.png)
+
+## Conclusion
+
+Now that we have successfully generated an SBOM for our containerized application using Syft and scanned it for vulnerabilities using Grype, we can see how these tools can be used to enhance the security of our deployments by understanding the attack vectors associated with third-party components.
+
+### Discrepancies
+
+As a preview to our merge with main, we are afforded the opporunity to see how many vulnerabilties identified.
+If we recall, we will see there were 1 medium, 6 low, and 40 listed as negligible when we ran our scan locally.
+
+Looking at our GitHub Security tab, we can see some minor differences. 
+Firstly, GitHub doesn't seem to label severity in the same way, assigning their own severity rating. 
+This gives us much different numbers when scanning: 3 critical, 7 high, 29 medium, and 1 low. 
+
+![Security Tab](assets/security-tab.png)
+
+Three critical vulnerabilities? How can this be? Let's investigate further.
+Clicking into the critical vulnerabilities, we can see that these are associated with the base image used in our Dockerfile.
+We can also see a discrepancy in how Grype and GitHub are identifying vulnerabilities.
+
+![severity-discrepancy](assets/severity-discrepancy.png)
+
+We can chalk this up to differences in vulnerability databases and how each tool classifies severity.
+
+### Risk Acceptance
+
+There exists any number of ays to handle risk, one way is to acknowldge and accpet certain risks.
+In the security community, we believe in being open about our flaws and knowing we cannot control every variable.
+So to accept and acknowledge the risk in our Dockerfile, we will dismiss all of the alerts in the Security ab with clearly defined explanations, then we will add all of our current findings to our `.grype.yaml` file.
+This gives us not only a risk profile, but will allow us to immediately see new vulnerabilities in the future.
+
+![Dismiss GitHub Alerts](assets/dismiss-github-alerts.png)
+
+
+**.grype.yaml sample**
+
+```yaml
+  - vulnerability: CVE-2024-56433
+    justifications:
+      - "Local multi-user SUBUID/SUBGID issue; container runs no local users or userns."
+
+  - vulnerability: CVE-2018-20796
+    justifications:
+      - "glibc strfmon overflow; no untrusted format-string or locale input in runtime."
+
+  - vulnerability: CVE-2019-1010022
+    justifications:
+      - "glibc regex engine issue; container does not evaluate attacker-controlled regex."
+```
+
+### Final Thoughts
+
+DevSecOps as a process is incorporating security into the SDLC. 
+By using Syft and Grype, we learn what makes up each layers of our container, further securing our microservices.
+This exercise also shows when it is necessary to accept vulnerabilities.
+For the future, I would like to show using secure images such as those from Chainguard and a refined build process seperating the build and runtime layers in my container further reducing vulnerable surfaces.
