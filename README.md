@@ -1,5 +1,11 @@
 # Supply Chain Security with SBOM
 
+<div align="center">
+
+[![SBOM Generation and Scanning with Syft and Grype](https://github.com/crow50/supply-chain-security-with-sbom/actions/workflows/syft-and-grype.yaml/badge.svg)](https://github.com/crow50/supply-chain-security-with-sbom/actions/workflows/syft-and-grype.yaml)
+
+</div>
+
 ## What is an SBOM?
 
 A Software Bill of Materials, or SBOM, is an inventory of all components, libraries, and module dependencies that are used in an application. This inventory is essential in understanding our software supply chain allowing us to secure our application by identifying vulnerabilities and managing risks associated with third-party components.
@@ -159,6 +165,113 @@ No vulnerabilities found
 
 ![Custom Config](assets/custom-config.png)
 
+## Before vs After Summary
+
+| Image              | Source            | High/Crit | Medium | Low | Negligible |
+|--------------------|-------------------|----------:|-------:|----:|-----------:|
+| `vuln-container`   | Base Jekyll image | 0         | 1      | 6   | 40         |
+| `rem-container`    | After remediation | 0         | 1     | 6*   | 40         |
+
+\* Low `rexml` vulnerability remediated at runtime; documented and allowlisted in `.grype.yaml`.
+
+
+## CI Integration using GitHub Actions
+
+Securing our software supply chain is an ongoing process that requires continuous monitoring and management. To automate this process, we can integrate Syft and Grype into our CI/CD pipeline using GitHub Actions. This allows us to automatically generate an SBOM and scan for vulnerabilities every time we push changes to our repository, and then attach the SBOM and vulnerability scan to our container as an artifact.
+
+In a production environment, we would typically run this workflow on every push to main or on pull requests to ensure that any changes to the codebase are scanned for vulnerabilities before being merged. 
+This pipeline fails on new HIGH or CRITICAL vulnerabilities, so they are caught before being deployed.
+
+Our workflow .yaml will have four main components:
+1. Build the container
+2. Install Syft and generate SBOM
+3. Install Grype and perform vulnerability scan on SBOM
+4. Upload results as artifacts
+
+```yaml
+name: SBOM Generation and Scanning with Syft and Grype
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+
+# Set permissions
+permissions:
+  contents: read
+  security-events: write
+
+
+jobs:
+  syft-and-grype:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Build the Docker image to be scanned
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t example-container:${{ github.sha }} .
+
+      # Install Syft
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin \
+            && syft version
+      
+      # Generating SBOM with Syft
+      - name: Generate SBOM with Syft
+        run: |
+          syft example-container:${{ github.sha }} -o cyclonedx-json > sbom.cyclonedx.json
+        
+      # Upload SBOM as artifact
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Syft-SBOM-SHA-${{ github.sha }}
+          path: sbom.cyclonedx.json
+          retention-days: 7
+
+      # Install Grype
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin \
+            && grype version
+
+      # Scan SBOM with Grype (on HIGH and CRITICAL severities)
+      - name: Scan SBOM with Grype
+        run: |
+          grype sbom:sbom.cyclonedx.json \
+          -o sarif \
+          -q \
+          -c .grype.yaml \
+          --ignore-states wont-fix \
+          --fail-on high \
+          > grype-scan-results.sarif
+
+      # Upload Grype scan results as SARIF to Code scanning
+      - name: Upload SARIF to Code scanning
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: grype-scan-results.sarif
+
+      # Upload SARIF results as artifact
+      - name: Upload SARIF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grype-SARIF-SHA-${{ github.sha }}
+          path: grype-scan-results.sarif
+          retention-days: 7
+```
+
 ## Conclusion
 
 Now that we have successfully generated an SBOM for our containerized application using Syft and scanned it for vulnerabilities using Grype, we can see how these tools can be used to enhance the security of our deployments by understanding the attack vectors associated with third-party components.
@@ -186,10 +299,10 @@ We can chalk this up to differences in vulnerability databases and how each tool
 
 There exists any number of ways to handle risk, one way is to acknowledge and accept certain risks.
 In the security community, we believe in being open about our flaws and knowing we cannot control every variable.
-So to accept and acknowledge the risk in our Dockerfile, we will dismiss all of the alerts in the Security tab with clearly defined explanations, then we will add all of our current findings to our `.grype.yaml` file.
+So to accept and acknowledge the risk in our Dockerfile, we will acknowledge all of the alerts in the Security tab with clearly defined explanations, then we will add all of our current findings to our `.grype.yaml` file.
 This gives us not only a risk profile, but will allow us to immediately see new vulnerabilities in the future.
 
-![Dismiss GitHub Alerts](assets/dismiss-github-alerts.png)
+![Acknowledge GitHub Alerts](assets/acknowledge-github-alerts.png)
 
 
 **.grype.yaml sample**
